@@ -16,8 +16,8 @@ public class DBPropertyUtil {
     		Properties props=new Properties();
     		FileInputStream fis=new FileInputStream(fileName);
     		//InputStream fis = DBPropertyUtil.class.getClassLoader().getResourceAsStream("db.properties");
-
-    	
+    		
+    		
     		props.load(fis);
     		String user=props.getProperty("user");
     		String password=props.getProperty("password");
@@ -27,10 +27,6 @@ public class DBPropertyUtil {
     		String port=props.getProperty("port");
     		connStr=protocol+"//"+system+":"+port+"/"+database+"?user="+user+"&password="+password;
     		return  connStr;
-    	}
-
-			
-
-    	
+    	}	
     }
 

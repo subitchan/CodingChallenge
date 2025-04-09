@@ -11,18 +11,23 @@ public class CareerHubDAOImpl implements CareerHubDAO {
     Connection conn = DBConnUtil.getDbConnection();
 
     public void insertCompany(Company company) {
-        try (PreparedStatement ps = conn.prepareStatement("INSERT INTO Companies VALUES (?, ?, ?)")) {
+        try {
+            PreparedStatement ps = conn.prepareStatement("INSERT INTO Companies VALUES (?, ?, ?)");
             ps.setInt(1, company.getCompanyID());
             ps.setString(2, company.getCompanyName());
             ps.setString(3, company.getLocation());
             ps.executeUpdate();
+            ps.close();
         } catch (SQLException e) {
             throw new DBConnectionException("Error inserting company", e);
         }
     }
 
     public void insertJobListing(JobListing job) {
-        try (PreparedStatement ps = conn.prepareStatement("INSERT INTO Jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?)");) {
+        try {
+        	if(job.getSalary()>0) {
+            PreparedStatement ps = conn.prepareStatement("INSERT INTO Jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            
             ps.setInt(1, job.getJobID());
             ps.setInt(2, job.getCompanyID());
             ps.setString(3, job.getJobTitle());
@@ -32,13 +37,20 @@ public class CareerHubDAOImpl implements CareerHubDAO {
             ps.setString(7, job.getJobType());
             ps.setTimestamp(8, Timestamp.valueOf(job.getPostedDate()));
             ps.executeUpdate();
+            ps.close();}
+        	else
+        	{
+        		throw new NegativeSalaryException("Negative salary is not allowed");
+        	}
         } catch (SQLException e) {
             throw new DBConnectionException("Error inserting job listing", e);
         }
     }
 
     public void insertApplicant(Applicant applicant) {
-        try (PreparedStatement ps = conn.prepareStatement("INSERT INTO Applicants VALUES (?, ?, ?, ?, ?, ?)");) {
+        try {
+        	if(applicant.getEmail().contains("@")) {
+            PreparedStatement ps = conn.prepareStatement("INSERT INTO Applicants VALUES (?, ?, ?, ?, ?, ?)");
             ps.setInt(1, applicant.getApplicantID());
             ps.setString(2, applicant.getFirstName());
             ps.setString(3, applicant.getLastName());
@@ -46,19 +58,28 @@ public class CareerHubDAOImpl implements CareerHubDAO {
             ps.setString(5, applicant.getPhone());
             ps.setString(6, applicant.getResume());
             ps.executeUpdate();
+            ps.close();
+        	}
+        	else
+        	{
+        		throw new InvalidEmailException("Email is not valid");
+        	}
         } catch (SQLException e) {
             throw new DBConnectionException("Error inserting applicant", e);
         }
     }
 
     public void insertJobApplication(JobApplication application) {
-        try (PreparedStatement ps = conn.prepareStatement("INSERT INTO Applications VALUES (?, ?, ?, ?, ?)");) {
+        try {
+        	
+            PreparedStatement ps = conn.prepareStatement("INSERT INTO Applications VALUES (?, ?, ?, ?, ?)");
             ps.setInt(1, application.getApplicationID());
             ps.setInt(2, application.getJobID());
             ps.setInt(3, application.getApplicantID());
             ps.setTimestamp(4, Timestamp.valueOf(application.getApplicationDate()));
             ps.setString(5, application.getCoverLetter());
             ps.executeUpdate();
+            ps.close();
         } catch (SQLException e) {
             throw new DBConnectionException("Error inserting application", e);
         }
@@ -66,8 +87,9 @@ public class CareerHubDAOImpl implements CareerHubDAO {
 
     public List<JobListing> getJobListings() {
         List<JobListing> jobs = new ArrayList<>();
-        try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT * FROM Jobs")) {
+        try {
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM Jobs");
             while (rs.next()) {
                 JobListing job = new JobListing(
                         rs.getInt("JobID"),
@@ -81,6 +103,8 @@ public class CareerHubDAOImpl implements CareerHubDAO {
                 );
                 jobs.add(job);
             }
+            rs.close();
+            stmt.close();
         } catch (SQLException e) {
             throw new DBConnectionException("Error retrieving job listings", e);
         }
@@ -89,7 +113,8 @@ public class CareerHubDAOImpl implements CareerHubDAO {
 
     public List<JobListing> searchJobsBySalaryRange(double minSalary, double maxSalary) {
         List<JobListing> jobs = new ArrayList<>();
-        try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM Jobs WHERE Salary BETWEEN ? AND ?")) {
+        try {
+            PreparedStatement ps = conn.prepareStatement("SELECT * FROM Jobs WHERE Salary BETWEEN ? AND ?");
             ps.setDouble(1, minSalary);
             ps.setDouble(2, maxSalary);
             ResultSet rs = ps.executeQuery();
@@ -106,19 +131,19 @@ public class CareerHubDAOImpl implements CareerHubDAO {
                 );
                 jobs.add(job);
             }
+            rs.close();
+            ps.close();
         } catch (SQLException e) {
             throw new DBConnectionException("Error searching job by salary range", e);
         }
         return jobs;
     }
 
-
-
     public List<Applicant> getApplicants() {
-    	
         List<Applicant> apps = new ArrayList<>();
-        try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT * FROM applicants")) {
+        try {
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM applicants");
             while (rs.next()) {
                 Applicant app = new Applicant(
                         rs.getInt("ApplicantID"),
@@ -127,17 +152,14 @@ public class CareerHubDAOImpl implements CareerHubDAO {
                         rs.getString("Email"),
                         rs.getString("Phone"),
                         rs.getString("Resume")
-              
                 );
-               apps.add(app);
+                apps.add(app);
             }
+            rs.close();
+            stmt.close();
         } catch (SQLException e) {
-            throw new DBConnectionException("Error retrieving job listings", e);
+            throw new DBConnectionException("Error retrieving applicants", e);
         }
-       
-    
         return apps;
     }
-
-
 }
